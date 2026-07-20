@@ -67,7 +67,8 @@
       check: '<svg viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></svg>',
       alert: '<svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 9v5M12 17h.01"/></svg>',
       reset: '<svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8"/><path d="M4 4v4h4"/></svg>',
-      play: '<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>'
+      play: '<svg viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></svg>',
+      ref: '<svg viewBox="0 0 24 24"><path d="M6 3h10l4 4v14H6z"/><path d="M16 3v5h5"/><path d="M9 13h6M9 17h6M9 9h3"/></svg>'
     };
     return icons[name] || "";
   }
@@ -183,12 +184,13 @@
             ${modeButton("practice", "book", "章节练习")}
             ${modeButton("wrong", "x", "错题强化")}
             ${modeButton("exam", "test", "模拟考试")}
+            ${modeButton("reference", "ref", "教材参考")}
           </nav>
           <button class="icon-button" data-action="reset" title="清空本地练习记录">${icon("reset")}</button>
         </header>
         <main class="layout">
           ${renderSidebar(s)}
-          ${state.mode === "exam" ? renderExam() : state.review ? renderReview() : renderPractice()}
+          ${state.mode === "reference" ? renderReference() : state.mode === "exam" ? renderExam() : state.review ? renderReview() : renderPractice()}
           ${renderDashboard(s)}
         </main>
       </div>
@@ -404,6 +406,92 @@
         <div class="actions">
           <button class="secondary" data-action="redo-batch">重做本组</button>
           <button class="primary" data-action="close-review">继续刷题</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderReference() {
+    const total = flatQuestions.length;
+    const referenceRows = [
+      {
+        chapter: "第一章 机械安全技术",
+        focus: "机械危险部位、防护装置、安全人机工程、工业机器人",
+        method: "多用场景判断题，考“优先采用哪类防护”和“措施是否符合本质安全”。"
+      },
+      {
+        chapter: "第二章 电气安全技术",
+        focus: "触电类型、防护接地接零、静电防护、电气防火防爆",
+        method: "结合作业环境和故障状态出题，干扰项常把管理措施冒充工程措施。"
+      },
+      {
+        chapter: "第三章 特种设备安全技术",
+        focus: "锅炉、压力容器、气瓶、压力管道、起重机械",
+        method: "突出安全附件、定期检验、运行监控、泄漏和吊装处置。"
+      },
+      {
+        chapter: "第四章 防火防爆安全技术",
+        focus: "燃爆机理、粉尘爆炸、防火防爆装置、消防设施、定量评价",
+        method: "重视“条件是否成立”“模型输入是否合理”“后果范围如何用于决策”。"
+      },
+      {
+        chapter: "第五章 危险化学品安全基础知识",
+        focus: "GHS分类、SDS与标签、储运包装、泄漏中毒和个体防护",
+        method: "按最新版教材的分类标签和全生命周期管理出题，不照搬旧真题表述。"
+      }
+    ];
+    const chapterCounts = bank.map((chapter) => ({
+      title: chapter.title,
+      total: chapter.sections.reduce((sum, section) => sum + section.questions.length, 0),
+      multiple: chapter.sections.reduce((sum, section) => sum + section.questions.filter((question) => question.type === "multiple").length, 0)
+    }));
+    return `
+      <section class="workspace reference-workspace">
+        <div class="question-head">
+          <div>
+            <p>教材参考 / 2026 官方教材</p>
+            <h2>按最新版教材重整题库边界</h2>
+          </div>
+          <button class="secondary compact" data-mode="practice">${icon("book")} 去刷题</button>
+        </div>
+        <div class="reference-hero">
+          <div>
+            <span>当前题库</span>
+            <strong>${total}</strong>
+            <p>题，覆盖官方教材五章主线。题目参考真题问法，但知识点按 2026 官方教材和蓝宝典目录重新组织。</p>
+          </div>
+          <div>
+            <span>命题口径</span>
+            <strong>新教材优先</strong>
+            <p>旧真题只用于学习出题方式；涉及章节变化、表述变化和新增内容时，以最新版教材为准。</p>
+          </div>
+        </div>
+        <div class="reference-grid">
+          ${referenceRows
+            .map(
+              (row) => `
+                <article class="reference-card">
+                  <h3>${escapeHtml(row.chapter)}</h3>
+                  <p><b>教材重点：</b>${escapeHtml(row.focus)}</p>
+                  <p><b>刷题方式：</b>${escapeHtml(row.method)}</p>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+        <div class="reference-table">
+          <div class="panel-head"><strong>题库分布</strong><span>单选 + 多选</span></div>
+          ${chapterCounts
+            .map(
+              (item) => `
+                <div class="reference-row">
+                  <span>${escapeHtml(item.title)}</span>
+                  <b>${item.total} 题</b>
+                  <em>多选 ${item.multiple} 题</em>
+                </div>
+              `
+            )
+            .join("")}
         </div>
       </section>
     `;
